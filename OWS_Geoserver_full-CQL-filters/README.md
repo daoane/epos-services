@@ -13,6 +13,7 @@ The EPOS data portal ([EPOS Platform Open Source](https://epos-eric.github.io/op
 * A Geoserver WFS service that is configured to produce the desired service payload. \
 => Use EPOS-extended GeoJSON for best compatibility with EPOS Platform Open Source (Recommendation: Geoserver's [Features-Templating extension](https://docs.geoserver.org/main/en/user/community/features-templating/index.html))
 * Correct EPOS DCAT-AP metadata for the service (see [documentation](https://epos-eu.github.io/EPOS-DCAT-AP/v3/), an example for the definition of the URL with filters is provided in [example.ttl](https://github.com/daoane/epos-services/edit/main/OWS_Geoserver_full-CQL-filters/example.ttl))
+* In service.php, adapt the variables that contain the URLs to the Geoserver service/layer.
 
 The service.php script expects a request from the data portal according to the example provided in [example.ttl](https://github.com/daoane/epos-services/edit/main/OWS_Geoserver_full-CQL-filters/example.ttl)). It deconstructs an incoming request, reformats its parts to comply with CQL-filter specifications, constructs the WFS query-URL, sends the request to Geoserver and forwards the reply to the client (the data portal).
 
