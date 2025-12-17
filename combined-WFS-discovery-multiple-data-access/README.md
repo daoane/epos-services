@@ -4,12 +4,12 @@ This example was developed for the MT-service (EMTDAMO) of TCS Geomagnetic Obser
 ### Features
 
 * Discovery of MT stations with [OGC WFS](https://www.ogc.org/standards/wfs/).
-* Download of transfer functions (TF) for the stations in the WFS discovery in one JSON data file or as a ZIP-archive of JSON files.
-* Download of transfer functions (TF) for individual stations in one JSON data file or as a ZIP-archive of JSON files.
+* Download of transfer functions (TF) for the stations in the WFS discovery as one JSON data file or as a ZIP-archive of JSON files.
+* Download of transfer functions (TF) for single or multiple stations by station name(s), as one JSON data file or as a ZIP-archive of JSON files.
 
 ### Requirements
 * A Geoserver WFS service that is configured to produce the desired service payload.
-* An internal Geoserver WFS service that supplies the database PKs for queried stations
+* An internal Geoserver WFS service that supplies the database PKs for queried stations.
 
 ### Files and their function
 #### [mtService.php](https://github.com/daoane/epos-services/edit/main/combined-WFS-discovery-multiple-data-access/mtService.php)
@@ -18,7 +18,7 @@ _"mtService.php - The allocator script that evaluates the URL and, accordingly, 
 mtService.php is the service endpoint. It deconstructs the incoming URL, determines the type of the requested response, calls the respective functions and returns the service payload to the client. In the download-window of the [EPOS data portal](https://www.ics-c.epos-eu.org/) ([EPOS Platform Open Source](https://github.com/epos-eu/epos-open-source)), available downloads are advertised as pairs of "File Name" and "File Format" ('outputFormat'), values that are set in the [EPOS DCAT-AP](https://epos-eu.github.io/EPOS-DCAT-AP/v3/) metadata. The variable 'outputFormat' is part of the WFS query string and thus, it can be use for determining the requested data type (function getService).
 1. 'outputFormat=application/geo+json' or 'outputFormat=geo+json' triggers MT station discovery (calls function discovery in file [discovery.php](https://github.com/daoane/epos-services/edit/main/combined-WFS-discovery-multiple-data-access/discovery.php)).
 2. 'outputFormat=application/json', 'outputFormat=json' and 'outputFormat=zip' triggers download of TF data for the stations in the WFS query as a single JSON file or as a ZIP archive of JSON files (calls function tfDataFromDiscover in file [tfDataFromDiscovery.php](https://github.com/daoane/epos-services/edit/main/combined-WFS-discovery-multiple-data-access/tfDataFromDiscovery.php).
-3. In addition, TF data download per station ('siteName') is provided, also as one JSON file or as a ZIP-archive of JSON files (calls function tfDataBySite in file [tfDataBySite.php](https://github.com/daoane/epos-services/edit/main/combined-WFS-discovery-multiple-data-access/tfDataBySite.php).
+3. In addition, TF data download per station ('siteName') is provided, also as one JSON file or as a ZIP-archive of JSON files (calls function tfDataBySite in file [tfDataBySite.php](https://github.com/daoane/epos-services/edit/main/combined-WFS-discovery-multiple-data-access/tfDataBySite.php). In the discovery data, the discovery data of each station contain data links based on 'siteName'.
 
 Please refer to the inline documenation of the php-code for details.
 
@@ -53,3 +53,17 @@ Check of data and service response, database queries
 
 #### [auxiliaries.php](https://github.com/daoane/epos-services/edit/main/combined-WFS-discovery-multiple-data-access/auxiliaries.php)
 eposgoPgConfig.php - Contains the database credentials that are sourced by the scripts. Placed in a safe place.
+
+### Example URLs
+#### Discovery
+https://template.abc/mtService.php?service=WFS&version=2.0.0&request=GetFeature&typeNames=eposgo:MTSiteView&srsName=CRS:84&outputFormat=application/geo+json&cql_filter=bbox(geometry,12,50,14,54)
+
+#### TF download after discovery ZIP and JSON
+https://template.abc/mtService.php?service=WFS&version=2.0.0&request=GetFeature&typeNames=eposgo:MTSiteView&srsName=CRS:84&outputFormat=application/geo+json&cql_filter=bbox(geometry,12,50,14,54)
+
+https://template.abc/mtService.php?service=WFS&version=2.0.0&request=GetFeature&typeNames=eposgo:MTSiteView&srsName=CRS:84&outputFormat=application/json&cql_filter=bbox(geometry,12,50,14,54)&dataType=IMP,TIP
+
+#### Site downlioad ZIP and JSON
+https://template.abc/mtService.php?siteName=MIDCR_m15,MIDCR_m16,MIDCR_m18&outputFormat=application/zip&dataType=TIP,HTF
+
+https://template.abc/mtService.php?siteName=MIDCR_m15,MIDCR_m16,MIDCR_m18&outputFormat=application/json&dataType=TIP,HTF
