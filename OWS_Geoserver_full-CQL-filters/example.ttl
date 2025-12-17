@@ -1,0 +1,184 @@
+#############################################################################
+# This examples contains only the hydra:Operation, which is responsible
+# for the URL templating. Make sure that other required metadata according
+# to EPOS DCAT-AP are included! (Review documentation and general examples.)
+#############################################################################
+@prefix adms: <http://www.w3.org/ns/adms#> .  
+@prefix adms: <http://www.w3.org/ns/adms#> .  
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .  
+@prefix epos: <https://www.epos-eu.org/epos-dcat-ap#> .  
+@prefix dc: <http://purl.org/dc/elements/1.1/> .  
+@prefix dct: <http://purl.org/dc/terms/> .  
+@prefix vcard: <http://www.w3.org/2006/vcard/ns#> .  
+@prefix hydra: <http://www.w3.org/ns/hydra/core#> .  
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .  
+@prefix schema: <http://schema.org/> .  
+@prefix dcat: <http://www.w3.org/ns/dcat#> .  
+@prefix cnt: <http://www.w3.org/2011/content#> .  
+@prefix locn: <http://www.w3.org/ns/locn#> .  
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .  
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .  
+@prefix http: <http://www.w3.org/2006/http#> .  
+@prefix owl: <http://www.w3.org/2002/07/owl#> .  
+@prefix gsp: <http://www.opengis.net/ont/geosparql#> .  
+@prefix time:  <http://www.w3.org/2006/time#> .
+@prefix dqv: <http://www.w3.org/ns/dqv#> .
+@prefix oa: <http://www.w3.org/ns/oa#> .
+
+##############
+# Operation #
+##############
+
+<https://doi.org/template/controlled-source-seismics-discovery-data-set/operation> a hydra:Operation;
+    hydra:method "GET"^^xsd:string;
+    hydra:returns "application/json";
+    hydra:property[ a hydra:IriTemplate;
+        # <URL to service.php> (below): Any URL that points to the service.php file, either directly or by reverse proxying 
+        hydra:template "<URL to service.php>{?service,version,request,typenames,outputFormat,count,srsName}&CQL_FILTER=Name%3D%27{Name}%27 AND Year%3D%27{Year}%27 AND Type%3D%27{Type}%27 AND Type%3D%27{Type}%27 AND Model%3D%27{Model}%27 AND bbox%28{geometry,minlongitude,minlatitude,maxlongitude,maxlatitude}%2C%27EPSG%3A4326%27%29"^^xsd:string;
+        # Service parameters
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "service"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "service";
+                schema:defaultValue "WFS";
+                hydra:required "true"^^xsd:boolean;
+                schema:readonlyValue "true"^^xsd:boolean ; # true = hidden
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "version"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "WFS version";
+                schema:defaultValue "2.0.2";
+                hydra:required "true"^^xsd:boolean;
+                schema:readonlyValue "true"^^xsd:boolean ; # true = hidden
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "request"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "Request type";
+                schema:defaultValue "GetFeature";
+                hydra:required "true"^^xsd:boolean;
+                schema:readonlyValue "true"^^xsd:boolean ; # true = hidden
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "typenames"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "FeatureType";
+                schema:defaultValue "eposcss:CSSSurveyView";
+                hydra:required "true"^^xsd:boolean;
+                schema:readonlyValue "true"^^xsd:boolean ; # true = hidden
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "outputFormat"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "Output format";
+                hydra:property "schema:encodingFormat";		
+                schema:defaultValue "json";
+                http:paramValue "json";
+                hydra:required "true"^^xsd:boolean;
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "count"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "WFS count parameter";
+                hydra:required "false"^^xsd:boolean;
+                schema:readonlyValue "true"^^xsd:boolean ; # true = hidden
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "srsName";
+                rdfs:range "xsd:string";
+                rdfs:label "SRS to use";
+                schema:defaultValue "urn:ogc:def:crs:OGC::CRS84";
+                http:paramValue "urn:ogc:def:crs:OGC::CRS84";
+                hydra:required "true"^^xsd:boolean;
+                schema:readonlyValue "true"^^xsd:boolean ; # true = hidden
+            ];
+        # Attribute filters
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "Name"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "Name";
+                hydra:required "false"^^xsd:boolean;
+                schema:readonlyValue "false"^^xsd:boolean ; # true = hidden
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "Year"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "Year of acquisition (YYYY, >YYYY, <YYYY, YYYY-YYYY)";
+                #schema:valuePattern "/^\d{4}$|^>\d{4}$|^<\d{4}$|^\d{4}-\d{4}$/"; # regex-patterns do not work, despite documentation
+                hydra:required "false"^^xsd:boolean;
+                schema:readonlyValue "false"^^xsd:boolean ; # true = hidden
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "Type"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "Survey type";
+                hydra:required "false"^^xsd:boolean;
+                schema:readonlyValue "false"^^xsd:boolean ; # true = hidden
+                http:paramValue "Type 1";
+                http:paramValue "Type 2";
+                http:paramValue "Type 3";
+                http:paramValue "Type 4";
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "Model"^^xsd:string;
+                rdfs:range "xsd:string";
+                rdfs:label "A model exists";
+                hydra:required "false"^^xsd:boolean;
+                schema:readonlyValue "false"^^xsd:boolean ; # true = hidden
+                http:paramValue "yes";
+                http:paramValue "no";
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "geometry";
+                rdfs:range "xsd:string";
+                rdfs:label "Geometry Name";
+                schema:defaultValue "geometry";
+                http:paramValue "geometry";
+                schema:readonlyValue "true"^^xsd:boolean ; 
+                hydra:required "true"^^xsd:boolean;
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "minlatitude"^^xsd:string;
+                hydra:property "epos:southernmostLatitude";
+                rdfs:range "xsd:float";
+                rdfs:label "Minimum Latitude";
+                schema:minValue "-90.0";
+                schema:maxValue "90.0";
+                hydra:required "true"^^xsd:boolean;
+                schema:defaultValue "-90";
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "maxlatitude"^^xsd:string;
+                hydra:property "epos:northernmostLatitude";
+                rdfs:range "xsd:float";
+                rdfs:label "Maximum Latitude";
+                schema:minValue "-90.0";
+                schema:maxValue "90.0";
+                hydra:required "true"^^xsd:boolean;
+                schema:defaultValue "90";
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "minlongitude"^^xsd:string;
+                hydra:property "epos:westernmostLongitude";
+                rdfs:range "xsd:float";
+                rdfs:label "Minimum Longitude";
+                schema:minValue "-180.0";
+                schema:maxValue "180.0";
+                hydra:required "true"^^xsd:boolean;
+                schema:defaultValue "-180";
+            ];
+            hydra:mapping[ a hydra:IriTemplateMapping;
+                hydra:variable "maxlongitude"^^xsd:string;
+                hydra:property "epos:easternmostLongitude";
+                rdfs:range "xsd:float";
+                rdfs:label "Maximum Longitude";
+                schema:minValue "-180.0";
+                schema:maxValue "180.0";
+                hydra:required "true"^^xsd:boolean;
+                schema:defaultValue "180";
+            ];
+
+
+    ] ;
+. 
