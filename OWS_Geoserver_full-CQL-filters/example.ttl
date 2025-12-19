@@ -29,7 +29,7 @@
 # Operation #
 ##############
 
-<https://doi.org/template/controlled-source-seismics-discovery-data-set/operation> a hydra:Operation;
+<https://doi.org/template/operation> a hydra:Operation;
     hydra:method "GET"^^xsd:string;
     hydra:returns "application/json";
     hydra:property[ a hydra:IriTemplate;
@@ -182,3 +182,4 @@
 
     ] ;
 . 
+
