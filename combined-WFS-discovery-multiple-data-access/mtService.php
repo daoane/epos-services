@@ -8,7 +8,7 @@ include_once "auxiliaries.php";
     $geoserverBaseURL = 'https://someURL/geoserver';
     
 // Read database connection parameters and define as constant
-    $db_conf_path = "pathToLocalFolder/eposgoPgConfig.php";
+    $db_conf_path = "relativePathToLocalFolder/eposgoPgConfig.php";
     try {
        if(!file_exists($db_conf_path))
          throw new Exception ('The configuration file does not exist');
