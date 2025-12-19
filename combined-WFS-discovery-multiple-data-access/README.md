@@ -52,18 +52,18 @@ _auxiliaries.php - Repeatedly used helper-functions needed by the other scripts.
 Check of data and service response, database queries
 
 #### [eposgoPgConfig.php](https://github.com/daoane/epos-services/blob/main/combined-WFS-discovery-multiple-data-access/eposgoPgConfig.php)
-eposgoPgConfig.php - Contains the database credentials that are sourced by the scripts. Placed in a safe place.
+eposgoPgConfig.php - Contains the database credentials that are sourced by the scripts. Requires access by the web server. Must not be accessible from the web.
 
 ### Example URLs
 #### Discovery
-https://template.abc/mtService.php?service=WFS&version=2.0.0&request=GetFeature&typeNames=eposgo:MTSiteView&srsName=CRS:84&outputFormat=application/geo+json&cql_filter=bbox(geometry,12,50,14,54)
+`https://template.abc/mtService.php?service=WFS&version=2.0.0&request=GetFeature&typeNames=eposgo:MTSiteView&srsName=CRS:84&outputFormat=application/geo+json&cql_filter=bbox(geometry,12,50,14,54)`
 
 #### TF download after discovery ZIP and JSON
-https://template.abc/mtService.php?service=WFS&version=2.0.0&request=GetFeature&typeNames=eposgo:MTSiteView&srsName=CRS:84&outputFormat=application/geo+json&cql_filter=bbox(geometry,12,50,14,54)
+`https://template.abc/mtService.php?service=WFS&version=2.0.0&request=GetFeature&typeNames=eposgo:MTSiteView&srsName=CRS:84&outputFormat=application/geo+json&cql_filter=bbox(geometry,12,50,14,54)`
 
-https://template.abc/mtService.php?service=WFS&version=2.0.0&request=GetFeature&typeNames=eposgo:MTSiteView&srsName=CRS:84&outputFormat=application/json&cql_filter=bbox(geometry,12,50,14,54)&dataType=IMP,TIP
+`https://template.abc/mtService.php?service=WFS&version=2.0.0&request=GetFeature&typeNames=eposgo:MTSiteView&srsName=CRS:84&outputFormat=application/json&cql_filter=bbox(geometry,12,50,14,54)&dataType=IMP,TIP`
 
 #### Site downlioad ZIP and JSON
-https://template.abc/mtService.php?siteName=MIDCR_m15,MIDCR_m16,MIDCR_m18&outputFormat=application/zip&dataType=TIP,HTF
+`https://template.abc/mtService.php?siteName=MIDCR_m15,MIDCR_m16,MIDCR_m18&outputFormat=application/zip&dataType=TIP,HTF`
 
-https://template.abc/mtService.php?siteName=MIDCR_m15,MIDCR_m16,MIDCR_m18&outputFormat=application/json&dataType=TIP,HTF
+`https://template.abc/mtService.php?siteName=MIDCR_m15,MIDCR_m16,MIDCR_m18&outputFormat=application/json&dataType=TIP,HTF`
