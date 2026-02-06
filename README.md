@@ -10,3 +10,5 @@ Provides an example implementation for an OGC WFS with with fully functional CQL
 
 ### Folder [combined-WFS-discovery-multiple-data-access](https://github.com/daoane/epos-services/tree/main/combined-WFS-discovery-multiple-data-access)
 A complex service that provides data discovery by WFS and data access to database content for a specific discovery request (JSON, ZIP). <br />
+
+[![DOI](https://zenodo.org/badge/1118088639.svg)](https://doi.org/10.5281/zenodo.17986112)
