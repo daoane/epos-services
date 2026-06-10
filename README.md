@@ -7,6 +7,7 @@ These scripts are published as examples that hopefully help others on their way 
 ## Examples
 ### Folder [OWS_Geoserver_full-CQL-filters](https://github.com/daoane/epos-services/blob/main/OWS_Geoserver_full-CQL-filters):
 Provides an example implementation for an OGC WFS with with fully functional CQL-filters. <br />
+Version 1.2 adds hierarchical filtering for controlled vocabularies.
 
 ### Folder [combined-WFS-discovery-multiple-data-access](https://github.com/daoane/epos-services/tree/main/combined-WFS-discovery-multiple-data-access)
 A complex service that provides data discovery by WFS and data access to database content for a specific discovery request (JSON, ZIP). <br />
