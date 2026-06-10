@@ -72,6 +72,11 @@ function preprocessQuery ($query) {
         case !empty($cqlMatches):
             // remove empty CQL filters from the EPOS portal
             $CQL = preg_replace('#\w+=\'\?\'\sAND\s#', '', $cqlMatches[2]);
+                        // replace + characters in the attribute values with literal spaces (the + character encoding for spaces are part of the econding at the ICS-C)
+            $CQL = preg_replace_callback("/'([^']+)'/", function($matches) {
+                // $matches[1] contains the text strictly inside the single quotes
+                return "'" . str_replace('+', ' ', $matches[1]) . "'";
+            }, $CQL);
             // change request format from "json" (as required by the portal for visibility in map and table view) to
             // application/json, for correct processing by Geoserver
             $baseQuery = preg_replace('#outputFormat=json#', 'outputFormat=application/json', $cqlMatches[1]);
