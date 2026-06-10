@@ -37,7 +37,19 @@
     //$geometryColumns = ['geomLine']; // single geometry
     
 // Pre-process the incoming URL and preprocess the query
-    $uri = parse_url(rawurldecode(filter_input(INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL))); //assign query string to variable
+    // 1. Get the raw, untouched URI structure first
+    $requestUri = filter_input(INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL);
+
+    // 2. Parse the URL components *while it is still encoded*
+    $parsedUrl = parse_url($requestUri);
+
+    // 3. Extract the query component
+    $queryString = isset($parsedUrl['query']) ? $parsedUrl['query'] : '';
+
+    // 4. Now, decode the query string safely
+    $decodedQueryString = rawurldecode($queryString);
+    
+    // 5. Preprocess the query
     $geoserverQuery = preprocessQuery($uri["query"]);
     
 // Query Geoserver with the preprocessed query
