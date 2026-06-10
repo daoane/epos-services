@@ -18,9 +18,19 @@
 
 // Define Geoserver base URL and service path for requests
     $geoserverBaseURL = 'http://localhost:8080/geoserver';
-    $geoserverServicePath = '/eposcss/ows?';
+    $geoserverServicePath = '/<your_namespace>/ows?';
     
-// define @epos-style styling parameters according to the documentation of EPOS GeoJSON (to be injected before returning the response)
+/**
+ * Vocabulary-attribute names. Any attribute in $vocabulary contains a value that is defined by a vocabulary. The helper-attribute
+ * 'abcPath" exposes the full hierarchy of the vocabulary-value as a stop-separated list ("Path"), to provide for filtering entire
+ * hierarchies, primarily to include records that contain children to specified parent values.
+ */
+    $vocabulary = [
+        'vocabulary1_name', 
+        'vocabulary2_name'
+    ];
+
+// Define @epos_style styling parameters according to the documentation of EPOS GeoJSON (to be injected before returning the response)
 // (https://epos-eric.github.io/opensource-docs/documentation/system-reference/data-formats/geojson)
     $eposStyle = array(
         "surveyPoint" => array("label" => "Font Awesome Arrows to Point"),
@@ -30,12 +40,12 @@
             "clustering"        => "true",
             "anchor"            => "C"));
     $eposStyle = json_encode($eposStyle);
-    
+
 // Array with the geometry columns (attributes) of the layer, that should be queried.
 // Each database entry will only have one geometry filled, the geometry depending on the type of data set.
     $geometryColumns = ['geomPoint', 'geomLine', 'geomPolygon', 'geomCollection'];
     //$geometryColumns = ['geomLine']; // single geometry
-    
+
 // Pre-process the incoming URL and preprocess the query
     // 1. Get the raw, untouched URI structure first
     $requestUri = filter_input(INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL);
@@ -50,26 +60,26 @@
     $decodedQueryString = rawurldecode($queryString);
     
     // 5. Preprocess the query
-    $geoserverQuery = preprocessQuery($uri["query"]);
-    
+    $geoserverQuery = preprocessQuery($decodedQueryString);
+
 // Query Geoserver with the preprocessed query
     $geoserverData = getGeoserverData($geoserverQuery);
-    
+
 // Insert the EPOS GeoJSON style information before returning the data
-    $eposData = preg_replace('#"type":\s*"FeatureCollection"#', '"type": "FeatureCollection", "@epos-style": ' . $eposStyle, $geoserverData);
-    
+    $eposData = preg_replace('#"type":\s*"FeatureCollection"#', '"type": "FeatureCollection", "@epos_style": ' . $eposStyle, $geoserverData);
+
 // Return the data to the client
     returnData($eposData);
 
 
- /**
+/**
  * Processes the query string:
  *   Test for bbox-filter in the main KVP-string.
  *   If the bbox-filter is there, CQL-filters are not allowed. Convert the bbox-filter to a CQL-filter with all geometries
  *   Remove empty CQL filters
  *   URL-encode the CQL filters
  *   Returns the correct query string for Geoserver.
- * 
+ *
  * @param string $query     The query part of the original URI.
  * @return string
  */
@@ -84,7 +94,7 @@ function preprocessQuery ($query) {
         case !empty($cqlMatches):
             // remove empty CQL filters from the EPOS portal
             $CQL = preg_replace('#\w+=\'\?\'\sAND\s#', '', $cqlMatches[2]);
-                        // replace + characters in the attribute values with literal spaces (the + character encoding for spaces are part of the econding at the ICS-C)
+            // replace + characters in the attribute values with literal spaces (the + character encoding for spaces are part of the econding at the ICS-C)
             $CQL = preg_replace_callback("/'([^']+)'/", function($matches) {
                 // $matches[1] contains the text strictly inside the single quotes
                 return "'" . str_replace('+', ' ', $matches[1]) . "'";
@@ -113,19 +123,21 @@ function preprocessQuery ($query) {
                         // test if $CQL is not empty, if not empty add the AND for the following bbox statement
                         if (!empty($CQL)) {
                             $CQL .= " AND ";
-                        }                        
+                        }
                         // add first bbox with the first geometry and remove the latter from the array
                         $CQL .= "(bbox(" . array_shift($geometryColumns). "," . $bboxMatches[1] . ')';
-                        // add bbox-filters for the remaining geometries 
+                        // add bbox-filters for the remaining geometries
                         foreach ($geometryColumns as $geometryColumn) {
                             $CQL .= " OR bbox(" . $geometryColumn . "," . $bboxMatches[1] . ')';
                         }
                         // close paranthesis after the last bbox (end of filter)
-                        $CQL .= ")"; 
+                        $CQL .= ")";
                     }
             }
+            // Convert attributes that are goverened by vocabularies for hierarchical search
+            $CQL = convertVocabularyAttributes($CQL);
             // URL encode the remaining CQL filters
-            $CQL = urlencode($CQL);
+            $CQL = rawurlencode($CQL);
             // assemble query for Geoserver
             $geoserverQuery = $baseQuery . $CQL;
             break;
@@ -141,9 +153,11 @@ function preprocessQuery ($query) {
                         $CQL .= " OR bbox(" . $geometryColumn . "," . $bboxCoordinates[2] . "," . $bboxCoordinates[3] . "," . $bboxCoordinates[4] . "," . $bboxCoordinates[5] . ")";
                     }
                     // close paranthesis after the last bbox (end of filter)
-                    $CQL .= ")"; 
+                    $CQL .= ")";
+                    // Convert attributes that are goverened by vocabularies for hierarchical search
+                    $CQL = convertVocabularyAttributes($CQL);
                     // URL encode the CQL-bounding box filter
-                    $CQL = urlencode($CQL);
+                    $CQL = rawurlencode($CQL);
                     // assemble query for Geoserver
                     $geoserverQuery = $bboxCoordinates[1] . "&CQL_FILTER=" . $CQL;
                     break;
@@ -158,7 +172,7 @@ function preprocessQuery ($query) {
 }
 
 
- /**
+/**
  * Subfunction to process comparative and range filters in the CQL-string:
  *   Detects </>/- in the filter parameter, like
  *        property='<XXXX'
@@ -168,7 +182,7 @@ function preprocessQuery ($query) {
  *        property<'XXXX'
  *        property>'XXXX'
  *        property BETWEEN 'XXXX' AND 'YYYY'
- * 
+ *
  * @param string $CQL     The CQL_FILTER string of the original query.
  * @return string
  */
@@ -197,50 +211,91 @@ function convertComparativeAndRangeFilters($CQL) {
     $replacements = [
         // Replacement for Rule 1 & 2:
         // Removes the = and moves the operator outside the quotes
-        '$1$2\'$3\'', 
+        '$1$2\'$3\'',
 
         // Replacement for Rule 3:
         // Converts hyphen syntax to SQL BETWEEN syntax
         '$1 BETWEEN \'$2\' AND \'$3\''
     ];
 
-    
+
     // Perform all replacements in one go
     return preg_replace($patterns, $replacements, $CQL);
+}
+
+/**
+ * Subfunction for attributes that contain vocabulary values. Attribute 'abcPath' contains the
+ * stop-separated vocabluary hierarchy ("Path") of the 'abc'-value. This function replaces
+ * attribute "abc" with "abcPath" and the equal sign with a like statement to search
+ * the hierarchy. In this way, also the values that are hierarchically below the present
+ * queried value are included.
+ * This function requires that attributes with the hierarchical information are exposed to Geoserver!
+ *
+ * @param string $CQL     The CQL_FILTER string of the original query.
+ * @return string
+ */
+function convertVocabularyAttributes($CQL) {
+    global $vocabulary;
+    
+    // Escape names and join them with '|' to create a regex alternation group
+    // Result: (domainPath|formatPath|investigationMethodPath|...)
+    $regexAttributes = implode('|', array_map('preg_quote', $vocabulary));
+
+    // Build the master regex pattern
+    // It looks for: word_boundary + attribute_name + word_boundary + optional_spaces + '=' + optional_spaces + 'value_inside_single_quotes'
+    $pattern = '/\b(' . $regexAttributes . ')\b\s*=\s*\'([^\']+)\'/';
+
+    // Perform the dynamic transformation
+    $CQL = preg_replace_callback($pattern, function($matches) {
+        // $matches[1] contains the attribute name (e.g., 'domainPath')
+        // $matches[2] contains the literal value searched (e.g., 'Solid Earth' or 'Seismic-Data')
+        $attribute = $matches[1] . 'Path';
+        $originalValue = $matches[2];
+
+        // CRITICAL: Sanitize the incoming value exactly how the PostGIS materialized view did.
+        // This replaces spaces, hyphens, and special characters with underscores so it matches the ltree path nodes.
+        $sanitizedValue = preg_replace('/[^a-zA-Z0-9_]/', '_', $originalValue);
+
+        // Reconstruct into the hierarchical expansion clause
+        // Example: (domainPath LIKE 'Solid_Earth.%' OR domainPath = 'Solid_Earth')
+        return "({$attribute} LIKE '%,{$sanitizedValue}.%' OR {$attribute} LIKE '%,{$sanitizedValue},')";
+    }, $CQL);
+    
+    return $CQL;    
 }
 
 
 /**
  * Queries Geoserver and returns the result.
- * 
+ *
  * @param string $geoserverBaseURL     The base URL to the Geoserver instance (usually the URL to the admin page).
  * @return json
  */
 function getGeoserverData ($geoserverQuery) {
     global $geoserverBaseURL;
     global $geoserverServicePath;
-            
+
     // concatenate the query URL
     $geoserverQueryURL = $geoserverBaseURL . $geoserverServicePath . $geoserverQuery;
     // execute the query and test whether it was successful
     $response = file_get_contents($geoserverQueryURL);
     // test whether the response contains data or an error
     geoserverResponseCheck($response);
-    
+
     return $response;
 }
 
 
 /**
  * Sets correct headers and returns the data to the client.
- * 
+ *
  * @param string $data    The data to be sent to the client.
  */
 function returnData($data) {
     header('Content-type: application/JSON');
     header('Pragma: no-cache'); // Prevents caching
     header('Expires: 0'); // Prevents caching
-    
+
     echo $data;
 }
 
@@ -248,7 +303,7 @@ function returnData($data) {
 /**
  * Test if Geoserver produced an error. In case of error, the response contains an error message and not data,
  * which causes the function to throw an exception that includes the Geoserver error message.
- * 
+ *
  * @param string $response    The response from Geoserver.
  * @throws Exception          If the response is not valid (incorrect request).
  */
